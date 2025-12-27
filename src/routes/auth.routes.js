@@ -81,6 +81,23 @@ router.post("/login", login);
 
 /**
  * @swagger
+ * /api/auth/logout:
+ *   post:
+ *     summary: Logout user (client should delete token)
+ *     tags: [Auth]
+ *     responses:
+ *       200:
+ *         description: Logged out successfully
+ */
+router.post("/logout", (req, res) => {
+    return res.json({
+        success: true,
+        message: "Logged out successfully",
+    });
+});
+
+/**
+ * @swagger
  * /api/auth/me:
  *   get:
  *     summary: Get currently logged-in user

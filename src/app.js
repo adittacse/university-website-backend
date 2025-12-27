@@ -21,7 +21,7 @@ const app = express();
 //     origin: true,
 //     credentials: true
 // }));
-const cors = require("cors");
+// const cors = require("cors");
 
 const allowedOrigins = [
     "http://localhost:3000",              // local dev
