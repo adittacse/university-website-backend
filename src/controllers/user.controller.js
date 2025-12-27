@@ -21,10 +21,11 @@ const getUsers = async (req, res) => {
         const total = await User.countDocuments(query);
 
         const users = await User.find(query)
+            .populate("role", "name")
             .select("-password")
             .skip((page - 1) * limit)
             .limit(limit)
-            .sort({ createdAt: -1 });
+            .sort({ name: "asc" });
 
         res.json({
             data: users,
