@@ -23,7 +23,7 @@ const app = express();
 // }));
 // [
 //     "http://localhost:3000",   // Next.js dev
-//     "http://localhost:3001",   // যদি আরেকটা local port লাগে
+//     "http://localhost:3001",
 //     "https://your-frontend.vercel.app", // future frontend
 // ],
 app.use(cors({
