@@ -21,12 +21,13 @@ const app = express();
 //     origin: true,
 //     credentials: true
 // }));
+// [
+//     "http://localhost:3000",   // Next.js dev
+//     "http://localhost:3001",   // যদি আরেকটা local port লাগে
+//     "https://your-frontend.vercel.app", // future frontend
+// ],
 app.use(cors({
-    origin: [
-        "http://localhost:3000",   // Next.js dev
-        "http://localhost:3001",   // যদি আরেকটা local port লাগে
-        "https://your-frontend.vercel.app", // future frontend
-    ],
+    origin: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true
