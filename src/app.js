@@ -27,6 +27,7 @@ const allowedOrigins = [
     "http://localhost:3000",              // local dev
     "http://localhost:3001",              // local dev
     "https://your-frontend.vercel.app",   // production frontend
+    "http://localhost:5002",              // swagger (local backend)
 ];
 
 app.use(cors({

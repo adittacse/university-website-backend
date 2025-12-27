@@ -81,24 +81,21 @@ const login = async (req, res) => {
         // find user with role populated
         const user = await User.findOne({ email }).populate("role");
         if (!user) {
-            return res.status(404).json({
-                message: "User not found",
-            });
+            return res.status(404).json({ message: "User not found" });
         }
 
         // compare password
-        const match = await bcrypt.compare(password, user.password);
-        if (!match) {
-            return res.status(401).json({
-                message: "Invalid credentials",
-            });
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ message: "Invalid credentials" });
         }
 
         // create JWT
         const token = jwt.sign(
             {
                 id: user._id,
-                role: user.role._id.toString(),
+                role: user.role.name,
+                // role: user.role._id.toString(),
             },
             process.env.JWT_SECRET,
             { expiresIn: "7d" },
@@ -110,16 +107,6 @@ const login = async (req, res) => {
         //     sameSite: "lax",
         //     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         // });
-        res.json({
-            message: "Login successful",
-            token,
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                role: user.role.name,
-            },
-        });
 
         res.json({
             message: "Login successful",
