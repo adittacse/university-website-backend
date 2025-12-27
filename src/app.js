@@ -22,7 +22,13 @@ const app = express();
 //     credentials: true
 // }));
 app.use(cors({
-    origin: true,
+    origin: [
+        "http://localhost:3000",   // Next.js dev
+        "http://localhost:3001",   // যদি আরেকটা local port লাগে
+        "https://your-frontend.vercel.app", // future frontend
+    ],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
 }));
 
 app.use(express.json({ limit: "10mb" }));
