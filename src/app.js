@@ -17,9 +17,12 @@ const app = express();
 
 // middlewares
 // origin: "http://localhost:3001",
+// app.use(cors({
+//     origin: true,
+//     credentials: true
+// }));
 app.use(cors({
     origin: true,
-    credentials: true
 }));
 
 app.use(express.json({ limit: "10mb" }));
