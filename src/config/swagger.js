@@ -26,6 +26,11 @@ const swaggerOptions = {
             }
         }
     },
+    security: [
+        {
+            bearerAuth: [],
+        },
+    ],
     tags: [
         { name: "Auth", description: "Authentication APIs" },
         { name: "Audit", description: "Audit logs" },
