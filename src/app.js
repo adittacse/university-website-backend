@@ -16,8 +16,9 @@ const adminRoutes = require("./routes/admin.routes");
 const app = express();
 
 // middlewares
+// origin: "http://localhost:3001",
 app.use(cors({
-    origin: "http://localhost:3001",
+    origin: true,
     credentials: true
 }));
 
