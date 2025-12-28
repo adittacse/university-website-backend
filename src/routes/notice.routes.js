@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
+const optionalAuth = require("../middlewares/optionalAuth.middleware");
 const auth = require("../middlewares/auth.middleware");
 const roleCheck = require("../middlewares/role.middleware");
 const uploadNotice = require("../config/multer");
@@ -8,6 +9,7 @@ const uploadNotice = require("../config/multer");
 const {
     createNotice,
     getNotices,
+    getNoticeDetails,
     getNoticeCounts,
     getNoticeById,
     downloadNotice,
@@ -109,7 +111,7 @@ const {
  *       500:
  *         description: Server error
  */
-router.get("/", auth, getNotices);
+router.get("/", optionalAuth, getNotices);
 
 /**
  * @swagger
@@ -239,6 +241,34 @@ router.patch("/restore", auth, roleCheck("admin"), restoreNotices);
  *         description: Server error
  */
 router.post("/", auth, roleCheck("admin"), uploadNotice.single("file"), createNotice);
+
+/**
+* @swagger
+* /api/notices/{id}:
+*   get:
+*     summary: Get notice details (role protected)
+*     description: |
+*       - Public notices accessible by anyone
+*       - Role-restricted notices accessible only by allowed roles
+*       - Admin can access all notices (including deleted)
+*     tags: [Notice]
+*     parameters:
+*       - in: path
+*         name: id
+*         required: true
+*         schema:
+*           type: string
+*     responses:
+*       200:
+*         description: Notice details
+*       401:
+*         description: Login required
+*       403:
+*         description: Access denied
+*       404:
+*         description: Notice not found
+*/
+router.get("/:id", optionalAuth, getNoticeDetails);
 
 /**
  * @swagger
