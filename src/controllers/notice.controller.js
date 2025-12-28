@@ -1,8 +1,8 @@
+const axios = require("axios");
+const cloudinary = require("../config/cloudinary");
 const Notice = require("../models/Notice");
 const User = require("../models/User");
 const Role = require("../models/Role");
-const path = require("path");
-const fs = require("fs");
 const logAudit = require("../utils/auditLogger");
 const mongoose = require("mongoose");
 
@@ -38,6 +38,7 @@ const parseArray = (value) => {
 const createNotice = async (req, res) => {
     try {
         const { title, description, categories, allowedRoles } = req.body;
+        const file = req.file;
 
         if (!req.file) {
             return res.status(400).json({ message: "File is required" });
@@ -62,10 +63,14 @@ const createNotice = async (req, res) => {
             categories: categoryIds,
             allowedRoles: roleIds,
             file: {
-                filename: req.file.filename,
-                path: req.file.path,
-                mimetype: req.file.mimetype,
-                size: req.file.size,
+                url: file.path,
+                originalname: file.originalname,
+                filename: file.filename,
+                public_id: file.filename.includes("/")
+                                ? file.filename
+                                : `university/notices/${file.filename}`,
+                mimetype: file.mimetype,
+                size: file.size,
             },
             createdBy: req.user.id,
         });
@@ -78,6 +83,24 @@ const createNotice = async (req, res) => {
         });
     }
 };
+
+
+const streamNoticeFile = async (req, res) => {
+    try {
+        const { publicId } = req.params;
+
+        const url = cloudinary.url(publicId, {
+            resource_type: "raw",
+            secure: true,
+        });
+
+        return res.redirect(url);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Failed to load file" });
+    }
+};
+
 
 // ================= GET ALL NOTICES =================
 const getNotices = async (req, res) => {
@@ -306,7 +329,7 @@ const getNoticeById = async (req, res) => {
 };
 
 // ================= DOWNLOAD NOTICE =================
-const downloadNotice = async (req, res) => {
+const downloadNoticeOld = async (req, res) => {
     try {
         const notice = await Notice.findById(req.params.id);
         if (notice.isDeleted) {
@@ -343,6 +366,37 @@ const downloadNotice = async (req, res) => {
     }
 };
 
+const downloadNotice = async (req, res) => {
+    try {
+        const notice = await Notice.findById(req.params.id);
+        if (!notice || !notice.file?.url) {
+            return res.status(404).send("File not found");
+        }
+
+        const response = await axios.get(notice.file.url, {
+            responseType: "stream",
+        });
+
+        res.setHeader(
+            "Content-Disposition",
+            `attachment; filename="${notice.file.originalName}"`
+        );
+
+        res.setHeader(
+            "Content-Type",
+            notice.file.mimetype || "application/octet-stream"
+        );
+
+        notice.downloadCount += 1;
+        await notice.save();
+
+        response.data.pipe(res);
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Download failed");
+    }
+};
+
 // ================= UPDATE NOTICE =================
 const updateNotice = async (req, res) => {
     try {
@@ -353,43 +407,32 @@ const updateNotice = async (req, res) => {
 
         const { title, description, categories, allowedRoles } = req.body;
 
-        if (title) {
-            notice.title = title;
-        }
-        if (description) {
-            notice.description = description;
-        }
-        if (categories) {
-            notice.categories = parseArray(categories);
-        }
-        if (allowedRoles) {
-            notice.allowedRoles = parseArray(allowedRoles);
-        }
+        if (title) notice.title = title;
+        if (description) notice.description = description;
+        if (categories) notice.categories = parseArray(categories);
+        if (allowedRoles) notice.allowedRoles = parseArray(allowedRoles);
 
-        // ================= FILE UPDATE =================
+        // ================= IMAGE UPDATE (Cloudinary) =================
         if (req.file) {
-            const archiveDir = path.resolve("uploads/notice/archive");
-
-            if (!fs.existsSync(archiveDir)) {
-                fs.mkdirSync(archiveDir, { recursive: true });
+            // 🔥 1️⃣ delete old image from cloudinary
+            if (notice.file?.public_id) {
+                await cloudinary.uploader.destroy(
+                    notice.file.public_id,
+                    { resource_type: "image" }
+                );
             }
 
-            // move old file to archive
-            if (notice.file?.path) {
-                const oldAbsolutePath = path.resolve(notice.file.path);
+            // save new image
+            const fullPublicId = req.file.filename.includes("/")
+                                    ? req.file.filename
+                                    : `university/notices/${req.file.filename}`;
 
-                if (fs.existsSync(oldAbsolutePath)) {
-                    const fileName = path.basename(oldAbsolutePath);
-                    const newAbsolutePath = path.join(archiveDir, fileName);
-
-                    fs.renameSync(oldAbsolutePath, newAbsolutePath);
-                }
-            }
-
-            // save new file
+            // 🔥 2️⃣ save new image info
             notice.file = {
+                url: req.file.path,          // cloudinary secure url
+                originalname: req.file.originalname,
                 filename: req.file.filename,
-                path: req.file.path, // multer already gives correct relative path
+                public_id: fullPublicId, // cloudinary public_id
                 mimetype: req.file.mimetype,
                 size: req.file.size,
             };
@@ -409,6 +452,7 @@ const updateNotice = async (req, res) => {
             notice,
         });
     } catch (error) {
+        console.error(error);
         res.status(500).json({
             message: "Failed to update notice",
             error: error.message,
@@ -542,23 +586,19 @@ const permanentDeleteNotices = async (req, res) => {
         let deletedCount = 0;
 
         for (const notice of notices) {
-            // ================= DELETE MAIN FILE =================
-            if (notice.file?.path) {
-                const mainPath = path.resolve(notice.file.path);
-                if (fs.existsSync(mainPath)) {
-                    fs.unlinkSync(mainPath);
-                }
-            }
-
-            // ================= DELETE ARCHIVE FILE (if exists) =================
-            if (notice.file?.filename) {
-                const archivePath = path.resolve(
-                    "uploads/notice/archive",
-                    notice.file.filename,
-                );
-
-                if (fs.existsSync(archivePath)) {
-                    fs.unlinkSync(archivePath);
+            // ================= DELETE IMAGE FROM CLOUDINARY =================
+            if (notice.file?.public_id) {
+                try {
+                    await cloudinary.uploader.destroy(
+                        notice.file.public_id,
+                        { resource_type: "image" }
+                    );
+                } catch (err) {
+                    console.error(
+                        "Cloudinary delete failed:",
+                        notice.file.public_id,
+                        err.message
+                    );
                 }
             }
 
@@ -581,6 +621,7 @@ const permanentDeleteNotices = async (req, res) => {
             deleted: deletedCount,
         });
     } catch (error) {
+        console.error(error);
         res.status(500).json({
             message: "Failed to permanently delete notices",
             error: error.message,
@@ -601,6 +642,7 @@ module.exports = {
     createNotice,
     getNotices,
     getNoticeDetails,
+    streamNoticeFile,
     getNoticeCounts,
     getNoticeById,
     downloadNotice,

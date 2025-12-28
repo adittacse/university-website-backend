@@ -10,11 +10,14 @@ const noticeSchema = new mongoose.Schema(
             type: String,
         },
         file: {
+            url: String,
+            originalname: String,
             filename: String,
-            path: String,
+            public_id: String,
             mimetype: String,
             size: Number,
         },
+
         categories: [
             {
                 type: mongoose.Schema.Types.ObjectId,

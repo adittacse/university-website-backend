@@ -4,7 +4,8 @@ const router = express.Router();
 const optionalAuth = require("../middlewares/optionalAuth.middleware");
 const auth = require("../middlewares/auth.middleware");
 const roleCheck = require("../middlewares/role.middleware");
-const uploadNotice = require("../config/multer");
+const upload = require("../middlewares/upload.middleware");
+const { streamNoticeFile } = require("../controllers/notice.controller");
 
 const {
     createNotice,
@@ -240,7 +241,7 @@ router.patch("/restore", auth, roleCheck("admin"), restoreNotices);
  *       500:
  *         description: Server error
  */
-router.post("/", auth, roleCheck("admin"), uploadNotice.single("file"), createNotice);
+router.post("/", auth, roleCheck("admin"), upload.single("file"), createNotice);
 
 /**
 * @swagger
@@ -321,7 +322,7 @@ router.get("/:id", optionalAuth, getNoticeDetails);
  *       500:
  *         description: Server error
  */
-router.patch("/:id", auth, roleCheck("admin"), uploadNotice.single("file"), updateNotice);
+router.patch("/:id", auth, roleCheck("admin"), upload.single("file"), updateNotice);
 
 /**
  * @swagger
@@ -411,6 +412,8 @@ router.delete("/:id", auth, roleCheck("admin"), deleteNotice);
  *       500:
  *         description: Server error
  */
-router.get("/:id/download", auth, downloadNotice);
+router.get("/:id/download", optionalAuth, downloadNotice);
+
+router.get("/notices/file/:publicId", streamNoticeFile);
 
 module.exports = router;

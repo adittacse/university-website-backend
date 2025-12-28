@@ -51,9 +51,6 @@ app.use(cors({
 app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());
 
-// static files (uploads)
-app.use("/uploads", express.static("uploads"));
-
 // swagger docs
 // swagger setup must before router setup
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
