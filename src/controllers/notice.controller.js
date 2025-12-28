@@ -235,30 +235,73 @@ const getNoticeById = async (req, res) => {
             .populate("categories", "name")
             .populate("allowedRoles", "name")
             .populate("createdBy", "name email");
-
-        if (notice.isDeleted) {
-            return res.status(404).json({ message: "Notice not found" });
+        
+        /* ================= NOT FOUND ================= */
+        if (!notice) {
+            return res.status(404).json({
+                message: "Notice not found",
+            });
         }
 
+        /* ================= ADMIN ACCESS ================= */
+        if (req.user) {
+            const adminUser = await User.findById(req.user.id).populate("role");
+            if (adminUser?.role?.name === "admin") {
+                notice.viewCount += 1;
+                await notice.save();
+                return res.json(notice);
+            }
+        }
+
+        /* ================= SOFT DELETE ================= */
+        if (notice.isDeleted) {
+            return res.status(404).json({
+                message: "Notice not found",
+            });
+        }
+
+        /* ================= PUBLIC NOTICE ================= */
+        if (!notice.allowedRoles || notice.allowedRoles.length === 0) {
+            notice.viewCount += 1;
+            await notice.save();
+            return res.json(notice);
+        }
+
+        /* ================= LOGIN REQUIRED ================= */
+        if (!req.user) {
+            return res.status(401).json({
+                message: "Login required",
+                info: "This notice is restricted to specific roles",
+                allowedRoles: notice.allowedRoles.map(r => r.name),
+            });
+        }
+
+        /* ================= ROLE CHECK ================= */
         const user = await User.findById(req.user.id).populate("role");
 
-        if (
-            notice.allowedRoles.length > 0 &&
-            user.role.name !== "admin" &&
-            !notice.allowedRoles.some(
-                (role) => role._id.toString() === user.role._id.toString(),
-            )
-        ) {
-            return res.status(403).json({ message: "Access denied" });
+        const isAllowed = notice.allowedRoles.some(
+            (role) => role._id.toString() === user.role._id.toString()
+        );
+
+        if (!isAllowed) {
+            return res.status(403).json({
+                message: "Access denied",
+                info: "This notice is only for specific roles",
+                allowedRoles: notice.allowedRoles.map(r => r.name),
+            });
         }
 
-        // 👁️ VIEW COUNT INCREMENT
+        /* ================= SUCCESS ================= */
         notice.viewCount += 1;
         await notice.save();
 
-        res.json(notice);
+        return res.json(notice);
+
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error(error);
+        res.status(500).json({
+            message: "Failed to load notice",
+        });
     }
 };
 

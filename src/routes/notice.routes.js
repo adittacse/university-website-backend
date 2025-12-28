@@ -345,14 +345,16 @@ router.patch("/:id", auth, roleCheck("admin"), uploadNotice.single("file"), upda
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Notice'
+ *       401:
+ *         description: Login required
+ *       403:
+ *         description: Access denied
  *       404:
  *         description: Notice not found
- *       401:
- *         description: Unauthorized
  *       500:
  *         description: Server error
  */
-router.get("/:id", auth, getNoticeById);
+router.get("/:id", optionalAuth, getNoticeById);
 
 /**
  * @swagger
