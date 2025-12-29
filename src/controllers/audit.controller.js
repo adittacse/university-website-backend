@@ -1,4 +1,5 @@
 const AuditLog = require("../models/AuditLog");
+const mongoose = require("mongoose");
 
 const getAuditLogs = async (req, res) => {
     try {
@@ -14,7 +15,7 @@ const getAuditLogs = async (req, res) => {
             filter.action = req.query.action;
         }
 
-        if (req.query.admin) {
+        if (req.query.admin && mongoose.Types.ObjectId.isValid(req.query.admin)) {
             filter.admin = req.query.admin;
         }
 
@@ -27,11 +28,19 @@ const getAuditLogs = async (req, res) => {
             filter.createdAt = {};
 
             if (req.query.from) {
-                filter.createdAt.$gte = new Date(req.query.from);
+                const fromDate = new Date(req.query.from);
+                fromDate.setHours(0, 0, 0, 0);
+                if (!isNaN(fromDate)) {
+                    filter.createdAt.$gte = fromDate;
+                }
             }
 
             if (req.query.to) {
-                filter.createdAt.$lte = new Date(req.query.to);
+                const toDate = new Date(req.query.to);
+                toDate.setHours(23, 59, 59, 999);
+                if (!isNaN(toDate)) {
+                    filter.createdAt.$lte = toDate;
+                }
             }
         }
 
@@ -39,6 +48,11 @@ const getAuditLogs = async (req, res) => {
         const [logs, total] = await Promise.all([
             AuditLog.find(filter)
                 .populate("admin", "name email")
+                .populate({
+                    path: "targetId",
+                    select: "title name",
+                    strictPopulate: false,
+                })
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(limit),

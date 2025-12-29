@@ -5,7 +5,7 @@ const auditLogSchema = new mongoose.Schema(
         admin: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
-            required: true,
+            required: false,
         },
         action: {
             type: String,
@@ -15,7 +15,9 @@ const auditLogSchema = new mongoose.Schema(
                 "NOTICE_UPDATE",
                 "NOTICE_DELETE", // soft delete
                 "NOTICE_RESTORE",
-                "NOTICE_PERMANENT_DELETE", // ✅ ADD THIS
+                "NOTICE_PERMANENT_DELETE", // permanent delete
+                "NOTICE_VIEW",
+                "NOTICE_DOWNLOAD",
                 "USER_ROLE_CHANGE",
             ],
         },

@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const Role = require("../models/Role");
+const logAudit = require("../utils/auditLogger");
 
 /**
  * GET /api/users
@@ -41,6 +42,33 @@ const getUsers = async (req, res) => {
 };
 
 /**
+ * Admin only
+ */
+const getAdminsOnly = async (req, res) => {
+    try {
+        const adminRole = await Role.findOne({ name: "admin" });
+
+        if (!adminRole) {
+            return res.status(404).json({
+                message: "Admin role not found",
+            });
+        }
+        
+        const admins = await User.find({ role: adminRole._id })
+            .select("_id name email")
+            .sort({ name: 1 });
+
+        res.json(admins);
+    } catch (err) {
+        res.status(500).json({
+            message: "Failed to fetch admins",
+            error: err.message,
+        });
+    }
+};
+
+
+/**
  * UPDATE USER ROLE (Admin only)
  */
 const updateUserRole = async (req, res) => {
@@ -49,31 +77,48 @@ const updateUserRole = async (req, res) => {
         const { roleId } = req.body;
 
         if (!roleId) {
-            return res.status(400).json({
-                message: "roleId is required",
-            });
+            return res.status(400).json({ message: "roleId is required" });
         }
 
         // check role exists
-        const role = await Role.findById(roleId);
-        if (!role) {
-            return res.status(404).json({
-                message: "Role not found",
-            });
+        const newRole = await Role.findById(roleId);
+        if (!newRole) {
+            return res.status(404).json({ message: "Role not found" });
         }
 
         // update user role
-        const user = await User.findByIdAndUpdate(
-            id,
-            { role: role._id },
-            { new: true },
-        ).populate("role", "name");
+        // const user = await User.findByIdAndUpdate(
+        //     id,
+        //     { role: newRole._id },
+        //     { new: true },
+        // ).populate("role", "name");
+
+        const user = await User.findById(id).populate("role");
 
         if (!user) {
-            return res.status(404).json({
-                message: "User not found",
-            });
+            return res.status(404).json({ message: "User not found" });
         }
+
+        const oldRoleName = user.role?.name || "student";
+
+        // update user role
+        user.role = newRole._id;
+        await user.save();
+
+        await user.populate("role", "name");
+
+        await logAudit({
+            adminId: req.user.id,
+            action: "USER_ROLE_CHANGE",
+            targetType: "User",
+            targetId: user._id,
+            meta: {
+                userName: user.name,
+                userEmail: user.email,
+                oldRole: oldRoleName,
+                newRole: newRole.name,
+            },
+        });
 
         res.json({
             message: "User role updated successfully",
@@ -111,4 +156,4 @@ const deleteUser = async (req, res) => {
     }
 };
 
-module.exports = { getUsers, updateUserRole, deleteUser };
+module.exports = { getUsers, getAdminsOnly, updateUserRole, deleteUser };

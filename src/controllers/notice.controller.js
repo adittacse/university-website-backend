@@ -75,6 +75,18 @@ const createNotice = async (req, res) => {
             createdBy: req.user.id,
         });
 
+        await logAudit({
+            adminId: req.user.id,
+            action: "NOTICE_CREATE",
+            targetType: "Notice",
+            targetId: notice._id,
+            meta: {
+                title: notice.title,
+                allowedRoles: roleNames,
+                categories: categoryIds,
+            },
+        });
+
         res.status(201).json(notice);
     } catch (error) {
         res.status(500).json({

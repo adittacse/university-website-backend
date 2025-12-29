@@ -3,7 +3,7 @@ const router = express.Router();
 
 const authMiddleware = require("../middlewares/auth.middleware");
 const roleCheck = require("../middlewares/role.middleware");
-const { getUsers, updateUserRole, deleteUser } = require("../controllers/user.controller");
+const { getUsers, getAdminsOnly, updateUserRole, deleteUser } = require("../controllers/user.controller");
 
 /**
  * @swagger
@@ -122,6 +122,41 @@ const { getUsers, updateUserRole, deleteUser } = require("../controllers/user.co
  *         description: Server error
  */
 router.get("/", authMiddleware, roleCheck("admin"), getUsers);
+
+/**
+ * @swagger
+ * /api/users/admins:
+ *   get:
+ *     summary: Get all admin for audit log filtering
+ *     description: Returns list of admins (id, name, email) to be used in audit log filters.
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of admins
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   _id:
+ *                     type: string
+ *                     example: 64fabc123...
+ *                   name:
+ *                     type: string
+ *                     example: John Doe
+ *                   email:
+ *                     type: string
+ *                     example: john@example.com
+ *       401:
+ *         description: Unauthorized Access
+ *       403:
+ *         description: Access denied (Not admin)
+ */
+router.get("/admins", authMiddleware, roleCheck("admin"), getAdminsOnly);
 
 /**
  * @swagger
