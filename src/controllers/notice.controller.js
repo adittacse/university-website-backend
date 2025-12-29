@@ -426,7 +426,7 @@ const updateNotice = async (req, res) => {
 
         // ================= IMAGE UPDATE (Cloudinary) =================
         if (req.file) {
-            // 🔥 1️⃣ delete old image from cloudinary
+            // delete old image from cloudinary
             if (notice.file?.public_id) {
                 await cloudinary.uploader.destroy(
                     notice.file.public_id,
@@ -439,7 +439,7 @@ const updateNotice = async (req, res) => {
                                     ? req.file.filename
                                     : `university/notices/${req.file.filename}`;
 
-            // 🔥 2️⃣ save new image info
+            // save new image info
             notice.file = {
                 url: req.file.path,          // cloudinary secure url
                 originalname: req.file.originalname,
@@ -457,6 +457,9 @@ const updateNotice = async (req, res) => {
             action: "NOTICE_UPDATE",
             targetType: "Notice",
             targetId: notice._id,
+            meta: {
+                title: notice.title,
+            },
         });
 
         res.json({
@@ -506,7 +509,7 @@ const deleteNotice = async (req, res) => {
 };
 
 // ================= RESTORE NOTICE (Admin only) =================
-const restoreNotices = async (req, res) => {
+const restoreNoticesOld = async (req, res) => {
     try {
         const { ids } = req.body;
 
@@ -549,6 +552,63 @@ const restoreNotices = async (req, res) => {
     }
 };
 
+const restoreNotices = async (req, res) => {
+    try {
+        const { ids } = req.body;
+
+        if (!ids || !Array.isArray(ids) || ids.length === 0) {
+            return res.status(400).json({ message: "ids array is required" });
+        }
+        
+        const notices = await Notice.find({
+            _id: { $in: ids },
+            isDeleted: true,
+        }).select("title");
+
+        if (notices.length === 0) {
+            return res.status(400).json({
+                message: "No deleted notices found to restore",
+            });
+        }
+
+        // restore
+        const result = await Notice.updateMany(
+            {
+                _id: { $in: ids },
+                isDeleted: true,
+            },
+            {
+                $set: {
+                    isDeleted: false,
+                    deletedAt: null,
+                },
+            }
+        );
+
+        // AUDIT LOG (with title)
+        for (const notice of notices) {
+            await logAudit({
+                adminId: req.user.id,
+                action: "NOTICE_RESTORE",
+                targetType: "Notice",
+                targetId: notice._id,
+                meta: {
+                    title: notice.title,
+                },
+            });
+        }
+
+        res.json({
+            message: "Notice(s) restored successfully",
+            restoredCount: result.modifiedCount,
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: "Failed to restore notice(s)",
+            error: error.message,
+        });
+    }
+};
 
 // ================= GET DELETED NOTICES (Admin only) =================
 const getDeletedNotices = async (req, res) => {
@@ -624,6 +684,9 @@ const permanentDeleteNotices = async (req, res) => {
                 action: "NOTICE_PERMANENT_DELETE",
                 targetType: "Notice",
                 targetId: notice._id,
+                meta: {
+                    title: notice.title,
+                },
             });
         }
 

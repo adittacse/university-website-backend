@@ -16,8 +16,6 @@ const auditLogSchema = new mongoose.Schema(
                 "NOTICE_DELETE", // soft delete
                 "NOTICE_RESTORE",
                 "NOTICE_PERMANENT_DELETE", // permanent delete
-                "NOTICE_VIEW",
-                "NOTICE_DOWNLOAD",
                 "USER_ROLE_CHANGE",
             ],
         },
