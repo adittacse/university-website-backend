@@ -246,7 +246,7 @@ const getNoticeById = async (req, res) => {
         notice.viewCount += 1;
         await notice.save();
 
-        await AuditLog.create({
+        await logAudit({
             admin: req.user?.id || null,
             action: "NOTICE_VIEW",
             targetType: "Notice",
@@ -304,7 +304,7 @@ const downloadNotice = async (req, res) => {
         await notice.save();
 
         // 🧾 AUDIT LOG (THIS IS THE KEY)
-        await AuditLog.create({
+        await logAudit({
             admin: req.user?.id || null,
             action: "NOTICE_DOWNLOAD",
             targetType: "Notice",
@@ -330,6 +330,7 @@ const downloadNotice = async (req, res) => {
 
         response.data.pipe(res);
     } catch (error) {
+        console.log(error)
         res.status(500).json({ message: "Download failed" });
     }
 };
