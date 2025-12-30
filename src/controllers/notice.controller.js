@@ -197,72 +197,6 @@ const getNotices = async (req, res) => {
     }
 };
 
-// ================= GET RESTRICTED NOTICE GUARD =================
-const getNoticeDetails = async (req, res) => {
-    try {
-        const { id } = req.params;
-
-        const notice = await Notice.findById(id)
-            .populate("categories", "name")
-            .populate("allowedRoles", "name")
-            .populate("createdBy", "name email");
-
-        if (!notice) {
-            return res.status(404).json({ message: "Notice not found" });
-        }
-
-        /* ================= ADMIN BYPASS ================= */
-        let user = null;
-
-        if (req.user) {
-            user = await User.findById(req.user.id).populate("role");
-        }
-
-        if (user && user.role.name === "admin") {
-            return res.json(notice);
-        }
-
-        /* ================= DELETED CHECK ================= */
-        if (notice.isDeleted) {
-            return res.status(404).json({ message: "Notice not found" });
-        }
-
-        /* ================= ROLE GUARD ================= */
-
-        // public notice (General / no role restriction)
-        if (!notice.allowedRoles || notice.allowedRoles.length === 0) {
-            return res.json(notice);
-        }
-
-        // guest user but role-restricted notice
-        if (!user) {
-            return res.status(401).json({
-                message: "Login required to view this notice",
-            });
-        }
-
-        const allowedRoleIds = notice.allowedRoles.map(r =>
-            r._id.toString()
-        );
-
-        if (!allowedRoleIds.includes(user.role._id.toString())) {
-            return res.status(403).json({
-                message: "You are not allowed to view this notice",
-            });
-        }
-
-        /* ================= SUCCESS ================= */
-        res.json(notice);
-
-    } catch (error) {
-        res.status(500).json({
-            message: "Failed to load notice",
-            error: error.message,
-        });
-    }
-};
-
-
 // ================= GET SINGLE NOTICE =================
 const getNoticeById = async (req, res) => {
     try {
@@ -675,7 +609,6 @@ const getNoticeCounts = async (req, res) => {
 module.exports = {
     createNotice,
     getNotices,
-    getNoticeDetails,
     streamNoticeFile,
     getNoticeCounts,
     getNoticeById,

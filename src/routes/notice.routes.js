@@ -10,7 +10,6 @@ const { streamNoticeFile } = require("../controllers/notice.controller");
 const {
     createNotice,
     getNotices,
-    getNoticeDetails,
     getNoticeCounts,
     getNoticeById,
     downloadNotice,
@@ -244,32 +243,37 @@ router.patch("/restore", auth, roleCheck("admin"), restoreNotices);
 router.post("/", auth, roleCheck("admin"), upload.single("file"), createNotice);
 
 /**
-* @swagger
-* /api/notices/{id}:
-*   get:
-*     summary: Get notice details (role protected)
-*     description: |
-*       - Public notices accessible by anyone
-*       - Role-restricted notices accessible only by allowed roles
-*       - Admin can access all notices (including deleted)
-*     tags: [Notice]
-*     parameters:
-*       - in: path
-*         name: id
-*         required: true
-*         schema:
-*           type: string
-*     responses:
-*       200:
-*         description: Notice details
-*       401:
-*         description: Login required
-*       403:
-*         description: Access denied
-*       404:
-*         description: Notice not found
-*/
-router.get("/:id", optionalAuth, getNoticeDetails);
+ * @swagger
+ * /api/notices/{id}:
+ *   get:
+ *     summary: Get single notice details
+ *     tags: [Notice]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Notice ID
+ *     responses:
+ *       200:
+ *         description: Notice details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Notice'
+ *       401:
+ *         description: Login required
+ *       403:
+ *         description: Access denied
+ *       404:
+ *         description: Notice not found
+ *       500:
+ *         description: Server error
+ */
+router.get("/:id", optionalAuth, getNoticeById);
 
 /**
  * @swagger
@@ -323,39 +327,6 @@ router.get("/:id", optionalAuth, getNoticeDetails);
  *         description: Server error
  */
 router.patch("/:id", auth, roleCheck("admin"), upload.single("file"), updateNotice);
-
-/**
- * @swagger
- * /api/notices/{id}:
- *   get:
- *     summary: Get single notice details
- *     tags: [Notice]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: Notice ID
- *     responses:
- *       200:
- *         description: Notice details
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Notice'
- *       401:
- *         description: Login required
- *       403:
- *         description: Access denied
- *       404:
- *         description: Notice not found
- *       500:
- *         description: Server error
- */
-router.get("/:id", optionalAuth, getNoticeById);
 
 /**
  * @swagger
