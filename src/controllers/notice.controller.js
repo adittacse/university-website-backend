@@ -96,22 +96,6 @@ const createNotice = async (req, res) => {
     }
 };
 
-const streamNoticeFile = async (req, res) => {
-    try {
-        const { publicId } = req.params;
-
-        const url = cloudinary.url(publicId, {
-            resource_type: "raw",
-            secure: true,
-        });
-
-        return res.redirect(url);
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "Failed to load file" });
-    }
-};
-
 // ================= GET ALL NOTICES =================
 const getNotices = async (req, res) => {
     try {
@@ -655,7 +639,6 @@ const getNoticeCounts = async (req, res) => {
 module.exports = {
     createNotice,
     getNotices,
-    streamNoticeFile,
     getNoticeCounts,
     getNoticeById,
     downloadNotice,

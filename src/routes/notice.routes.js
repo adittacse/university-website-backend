@@ -5,7 +5,6 @@ const optionalAuth = require("../middlewares/optionalAuth.middleware");
 const auth = require("../middlewares/auth.middleware");
 const roleCheck = require("../middlewares/role.middleware");
 const upload = require("../middlewares/upload.middleware");
-const { streamNoticeFile } = require("../controllers/notice.controller");
 
 const {
     createNotice,
@@ -384,7 +383,5 @@ router.delete("/:id", auth, roleCheck("admin"), deleteNotice);
  *         description: Server error
  */
 router.get("/:id/download", optionalAuth, downloadNotice);
-
-router.get("/notices/file/:publicId", streamNoticeFile);
 
 module.exports = router;
