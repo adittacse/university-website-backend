@@ -341,71 +341,30 @@ const getNoticeById = async (req, res) => {
 };
 
 // ================= DOWNLOAD NOTICE =================
-const downloadNoticeOld = async (req, res) => {
-    try {
-        const notice = await Notice.findById(req.params.id);
-        if (notice.isDeleted) {
-            return res.status(404).json({ message: "Notice not found" });
-        }
-
-        const allowedRoles = notice.allowedRoles || [];
-
-        const user = await User.findById(req.user.id).populate("role");
-
-        if (
-            allowedRoles.length > 0 &&
-            user.role.name !== "admin" &&
-            !allowedRoles.some(
-                (role) => role.toString() === user.role._id.toString(),
-            )
-        ) {
-            return res.status(403).json({ message: "Access denied" });
-        }
-
-        if (!notice.file?.path || !fs.existsSync(notice.file.path)) {
-            return res.status(404).json({ message: "File not found" });
-        }
-
-        notice.downloadCount += 1;
-        await notice.save();
-
-        res.download(notice.file.path, notice.file.filename);
-    } catch (error) {
-        res.status(500).json({
-            message: "Failed to download notice",
-            error: error.message,
-        });
-    }
-};
-
 const downloadNotice = async (req, res) => {
     try {
         const notice = await Notice.findById(req.params.id);
-        if (!notice || !notice.file?.url) {
-            return res.status(404).send("File not found");
+
+        if (!notice || notice.isDeleted) {
+            return res.status(404).json({ message: "Notice not found" });
         }
 
-        const response = await axios.get(notice.file.url, {
-            responseType: "stream",
-        });
+        if (!notice.file?.url) {
+            return res.status(404).json({ message: "File not found" });
+        }
 
-        res.setHeader(
-            "Content-Disposition",
-            `attachment; filename="${notice.file.originalName}"`
-        );
-
-        res.setHeader(
-            "Content-Type",
-            notice.file.mimetype || "application/octet-stream"
-        );
-
+        // 🔥 increment download count
         notice.downloadCount += 1;
         await notice.save();
 
-        response.data.pipe(res);
-    } catch (err) {
-        console.error(err);
-        res.status(500).send("Download failed");
+        // 🔥 redirect to external hosted file
+        return res.redirect(notice.file.url);
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            message: "Failed to download notice",
+        });
     }
 };
 
