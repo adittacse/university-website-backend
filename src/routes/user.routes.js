@@ -121,7 +121,7 @@ const { getUsers, getAdminsOnly, updateUserRole, deleteUser } = require("../cont
  *       500:
  *         description: Server error
  */
-router.get("/", authMiddleware, roleCheck("admin"), getUsers);
+router.get("/", authMiddleware, roleCheck(["admin"]), getUsers);
 
 /**
  * @swagger
@@ -156,7 +156,7 @@ router.get("/", authMiddleware, roleCheck("admin"), getUsers);
  *       403:
  *         description: Access denied (Not admin)
  */
-router.get("/admins", authMiddleware, roleCheck("admin"), getAdminsOnly);
+router.get("/admins", authMiddleware, roleCheck(["admin"]), getAdminsOnly);
 
 /**
  * @swagger
@@ -226,7 +226,7 @@ router.get("/admins", authMiddleware, roleCheck("admin"), getAdminsOnly);
  *       500:
  *         description: Server error
  */
-router.patch("/:id/role", authMiddleware, roleCheck("admin"), updateUserRole);
+router.patch("/:id/role", authMiddleware, roleCheck(["admin"]), updateUserRole);
 
 /**
  * @swagger
@@ -264,6 +264,6 @@ router.patch("/:id/role", authMiddleware, roleCheck("admin"), updateUserRole);
  *       500:
  *         description: Server error
  */
-router.delete("/:id", authMiddleware, roleCheck("admin"), deleteUser);
+router.delete("/:id", authMiddleware, roleCheck(["admin"]), deleteUser);
 
 module.exports = router;

@@ -2,17 +2,27 @@ const User = require("../models/User");
 
 /**
  * Role-based access control middleware
- * @param {...string} allowedRoles - role names (e.g. "admin")
+ * @param {string[] | ...string} roles - allowed roles
+ *
+ * Usage:
+ *  roleCheck("admin")
+ *  roleCheck("admin", "teacher")
+ *  roleCheck(["admin", "teacher"])
  */
-const roleCheck = (...allowedRoles) => {
+const roleCheck = (roles) => {
+    // Normalize roles to array
+    const allowedRoles = Array.isArray(roles) ? roles : Array.from(arguments);
+
     return async (req, res, next) => {
         try {
-            // req.user.id comes from authMiddleware (JWT)
-            const user = await User.findById(req.user.id).populate("role", "name");
+            // req.user.id comes from auth middleware (JWT)
+            const user = await User
+                .findById(req.user.id)
+                .populate("role", "name");
 
             if (!user || !user.role) {
                 return res.status(401).json({
-                    message: "Unauthorized Access",
+                    message: "Unauthorized access",
                 });
             }
 

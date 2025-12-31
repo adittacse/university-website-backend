@@ -124,9 +124,9 @@ router.get("/", optionalAuth, getNotices);
  *       200:
  *         description: List of deleted notices
  */
-router.get("/deleted", auth, roleCheck("admin"), getDeletedNotices);
+router.get("/deleted", auth, roleCheck(["admin", "teacher"]), getDeletedNotices);
 
-router.get("/counts", auth, roleCheck("admin"), getNoticeCounts);
+router.get("/counts", auth, roleCheck(["admin", "teacher"]), getNoticeCounts);
 
 /**
  * @swagger
@@ -158,7 +158,7 @@ router.get("/counts", auth, roleCheck("admin"), getNoticeCounts);
  *       403:
  *         description: Admin only
  */
-router.delete("/permanent", auth, roleCheck("admin"), permanentDeleteNotices);
+router.delete("/permanent", auth, roleCheck(["admin", "teacher"]), permanentDeleteNotices);
 
 /**
  * @swagger
@@ -187,7 +187,7 @@ router.delete("/permanent", auth, roleCheck("admin"), permanentDeleteNotices);
  *       200:
  *         description: Notice(s) restored successfully
  */
-router.patch("/restore", auth, roleCheck("admin"), restoreNotices);
+router.patch("/restore", auth, roleCheck(["admin", "teacher"]), restoreNotices);
 
 /**
  * @swagger
@@ -239,7 +239,7 @@ router.patch("/restore", auth, roleCheck("admin"), restoreNotices);
  *       500:
  *         description: Server error
  */
-router.post("/", auth, roleCheck("admin"), upload.single("file"), createNotice);
+router.post("/", auth, roleCheck(["admin", "teacher"]), upload.single("file"), createNotice);
 
 /**
  * @swagger
@@ -325,7 +325,7 @@ router.get("/:id", optionalAuth, getNoticeById);
  *       500:
  *         description: Server error
  */
-router.patch("/:id", auth, roleCheck("admin"), upload.single("file"), updateNotice);
+router.patch("/:id", auth, roleCheck(["admin", "teacher"]), upload.single("file"), updateNotice);
 
 /**
  * @swagger
@@ -354,7 +354,7 @@ router.patch("/:id", auth, roleCheck("admin"), upload.single("file"), updateNoti
  *       500:
  *         description: Server error
  */
-router.delete("/:id", auth, roleCheck("admin"), deleteNotice);
+router.delete("/:id", auth, roleCheck(["admin", "teacher"]), deleteNotice);
 
 /**
  * @swagger

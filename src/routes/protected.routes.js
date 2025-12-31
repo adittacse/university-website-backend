@@ -32,7 +32,7 @@ router.get("/user", auth, (req, res) => {
  *       200:
  *         description: Admin access granted
  */
-router.get("/admin", auth, role("admin"), (req, res) => {
+router.get("/admin", auth, role(["admin"]), (req, res) => {
     res.json({ message: "Welcome Admin" });
 });
 

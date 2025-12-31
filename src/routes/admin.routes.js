@@ -154,6 +154,6 @@ const { adminDashboard } = require("../controllers/admin.controller");
  *                   type: string
  *                   example: Internal server error
  */
-router.get("/dashboard", auth, roleCheck("admin"), adminDashboard);
+router.get("/dashboard", auth, roleCheck(["admin", "teacher"]), adminDashboard);
 
 module.exports = router;

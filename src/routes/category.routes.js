@@ -59,7 +59,7 @@ router.post("/", auth, roleCheck("admin"), createCategory);
  *       200:
  *         description: Category list
  */
-router.get("/", auth, roleCheck("admin"), getCategories);
+router.get("/", auth, roleCheck(["admin", "teacher"]), getCategories);
 
 /**
  * @swagger

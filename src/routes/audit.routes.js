@@ -57,6 +57,6 @@ const { getAuditLogs } = require("../controllers/audit.controller");
  *       403:
  *         description: Access denied
  */
-router.get("/", auth, roleCheck("admin"), getAuditLogs);
+router.get("/", auth, roleCheck(["admin"]), getAuditLogs);
 
 module.exports = router;

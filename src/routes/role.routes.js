@@ -41,7 +41,7 @@ const {
  *       200:
  *         description: Role created
  */
-router.post("/", auth, roleCheck("admin"), createRole);
+router.post("/", auth, roleCheck(["admin"]), createRole);
 
 /**
  * @swagger
@@ -55,7 +55,7 @@ router.post("/", auth, roleCheck("admin"), createRole);
  *       200:
  *         description: List of roles
  */
-router.get("/", auth, roleCheck("admin"), getRoles);
+router.get("/", auth, roleCheck(["admin", "teacher"]), getRoles);
 
 /**
  * @swagger
@@ -86,7 +86,7 @@ router.get("/", auth, roleCheck("admin"), getRoles);
  *       200:
  *         description: Role updated
  */
-router.patch("/:id", auth, roleCheck("admin"), updateRole);
+router.patch("/:id", auth, roleCheck(["admin"]), updateRole);
 
 /**
  * @swagger
@@ -106,6 +106,6 @@ router.patch("/:id", auth, roleCheck("admin"), updateRole);
  *       200:
  *         description: Role deleted
  */
-router.delete("/:id", auth, roleCheck("admin"), deleteRole);
+router.delete("/:id", auth, roleCheck(["admin"]), deleteRole);
 
 module.exports = router;

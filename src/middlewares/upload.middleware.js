@@ -7,8 +7,8 @@ const storage = new CloudinaryStorage({
     params: (req, file) => {
         return {
             folder: "university/notices",
-            resource_type: "image",          // ✅ ONLY IMAGE
-            public_id: `notice_${Date.now()}`, // ❌ NO extension here
+            resource_type: "image",          //  ONLY IMAGE
+            public_id: `notice_${Date.now()}`, //  NO extension here
         };
     },
 });
@@ -16,7 +16,7 @@ const storage = new CloudinaryStorage({
 const upload = multer({
     storage,
     fileFilter: (req, file, cb) => {
-        // ✅ Only images allowed
+        //  Only images allowed
         if (!file.mimetype.startsWith("image/")) {
             return cb(new Error("Only image files are allowed"), false);
         }
