@@ -179,6 +179,71 @@ const getNotices = async (req, res) => {
     }
 };
 
+/**
+ * Get notices created by logged-in teacher
+ */
+const getMyNotices = async (req, res) => {
+    try {
+        const userId = req.user.id; // from auth middleware
+
+        // ================= QUERY PARAMS =================
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const search = req.query.search || "";
+        const category = req.query.category || null;
+
+        const skip = (page - 1) * limit;
+
+        // ================= FILTER =================
+        const filter = {
+            createdBy: userId, // 🔥 ONLY own notices
+            isDeleted: false,
+        };
+
+        if (search) {
+            filter.title = { $regex: search, $options: "i" };
+        }
+
+        if (category) {
+            filter.categories = category;
+        }
+
+        // ================= QUERY =================
+        const [notices, total] = await Promise.all([
+            Notice.find(filter)
+                .populate("categories", "name")
+                .populate("allowedRoles", "name")
+                .populate("createdBy", "name email")
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit),
+
+            Notice.countDocuments(filter),
+        ]);
+
+        // ================= RESPONSE =================
+        res.json({
+            data: notices,
+            pagination: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit),
+            },
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: "Failed to fetch notices",
+            error: error.message,
+        });
+    }
+};
+
+module.exports = {
+    getMyNotices,
+};
+
+
 // ================= GET SINGLE NOTICE =================
 const getNoticeById = async (req, res) => {
     try {
@@ -640,6 +705,7 @@ const getNoticeCounts = async (req, res) => {
 module.exports = {
     createNotice,
     getNotices,
+    getMyNotices,
     getNoticeCounts,
     getNoticeById,
     downloadNotice,

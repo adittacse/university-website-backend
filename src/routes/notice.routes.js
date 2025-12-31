@@ -9,6 +9,7 @@ const upload = require("../middlewares/upload.middleware");
 const {
     createNotice,
     getNotices,
+    getMyNotices,
     getNoticeCounts,
     getNoticeById,
     downloadNotice,
@@ -111,6 +112,70 @@ const {
  *         description: Server error
  */
 router.get("/", optionalAuth, getNotices);
+
+/**
+ * @swagger
+ * /api/notices/my-notices:
+ *   get:
+ *     summary: Get notices created by the logged-in teacher
+ *     description: |
+ *       Returns only the notices created by the currently logged-in user.
+ *       Access restricted to **teacher** role only.
+ *     tags: [Notice]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           example: 10
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *           example: exam
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *           example: 694db8a09c651bdd39fe4797
+ *     responses:
+ *       200:
+ *         description: List of notices created by the teacher
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Notice'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden (Only teachers can access)
+ *       500:
+ *         description: Server error
+ */
+router.get("/my-notices", auth, roleCheck(["teacher"]), getMyNotices);
 
 /**
  * @swagger
