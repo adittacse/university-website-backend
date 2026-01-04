@@ -185,6 +185,7 @@ const getNotices = async (req, res) => {
 const getMyNotices = async (req, res) => {
     try {
         const userId = req.user.id; // from auth middleware
+        const isDeleted = req.query.isDeleted;
 
         // ================= QUERY PARAMS =================
         const page = parseInt(req.query.page) || 1;
@@ -194,11 +195,22 @@ const getMyNotices = async (req, res) => {
 
         const skip = (page - 1) * limit;
 
+        // get teacher user
+        const teacherUser = await User.findById(userId).populate("role");
+
         // ================= FILTER =================
-        const filter = {
-            createdBy: userId, // 🔥 ONLY own notices
-            isDeleted: false,
-        };
+        let filter = {};
+
+        if (teacherUser?.role?.name === "teacher") {
+            filter.createdBy = userId;
+        }
+
+        // isDeleted filter
+        if (isDeleted === "true") {
+            filter.isDeleted = true;
+        } else {
+            filter.isDeleted = false;
+        }
 
         if (search) {
             filter.title = { $regex: search, $options: "i" };
@@ -232,17 +244,13 @@ const getMyNotices = async (req, res) => {
             },
         });
     } catch (error) {
+        console.log(error)
         res.status(500).json({
             message: "Failed to fetch notices",
             error: error.message,
         });
     }
 };
-
-module.exports = {
-    getMyNotices,
-};
-
 
 // ================= GET SINGLE NOTICE =================
 const getNoticeById = async (req, res) => {
@@ -395,7 +403,7 @@ const downloadNotice = async (req, res) => {
 
         response.data.pipe(res);
     } catch (error) {
-        console.log(error)
+        console.log(error);
         res.status(500).json({ message: "Download failed" });
     }
 };
@@ -693,7 +701,7 @@ const permanentDeleteNotices = async (req, res) => {
     }
 };
 
-const getNoticeCounts = async (req, res) => {
+const getNoticeCountsOld = async (req, res) => {
     const [published, trash] = await Promise.all([
         Notice.countDocuments({ isDeleted: false }),
         Notice.countDocuments({ isDeleted: true }),
@@ -702,11 +710,38 @@ const getNoticeCounts = async (req, res) => {
     res.json({ published, trash });
 };
 
+const getNoticeCounts = async (req, res) => {
+    try {
+        const { role } = req.user;
+        
+        const userId = new mongoose.Types.ObjectId(req.user.id);
+
+        let publishedFilter = { isDeleted: false };
+        let trashFilter = { isDeleted: true };
+
+        if (role === "teacher") {
+            publishedFilter.createdBy = userId;
+            trashFilter.createdBy = userId;
+        }
+
+        const [published, trash] = await Promise.all([
+            Notice.countDocuments(publishedFilter),
+            Notice.countDocuments(trashFilter),
+        ]);
+
+        res.json({ published, trash });
+    } catch (err) {
+        res.status(500).json({ message: "Failed to get notice counts" });
+    }
+};
+
+
 module.exports = {
     createNotice,
     getNotices,
     getMyNotices,
     getNoticeCounts,
+    // getMyNoticeCounts,
     getNoticeById,
     downloadNotice,
     updateNotice,

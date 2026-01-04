@@ -11,6 +11,7 @@ const {
     getNotices,
     getMyNotices,
     getNoticeCounts,
+    getMyNoticeCounts,
     getNoticeById,
     downloadNotice,
     updateNotice,

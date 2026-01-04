@@ -17,7 +17,6 @@ const noticeSchema = new mongoose.Schema(
             mimetype: String,
             size: Number,
         },
-
         categories: [
             {
                 type: mongoose.Schema.Types.ObjectId,
@@ -41,6 +40,7 @@ const noticeSchema = new mongoose.Schema(
         createdBy: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
+            required: true
         },
         isDeleted: {
             type: Boolean,
