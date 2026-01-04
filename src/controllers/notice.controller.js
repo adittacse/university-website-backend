@@ -376,16 +376,16 @@ const downloadNotice = async (req, res) => {
         notice.downloadCount += 1;
         await notice.save();
 
-        // 🧾 AUDIT LOG (THIS IS THE KEY)
-        await logAudit({
-            admin: req.user?.id || null,
-            action: "NOTICE_DOWNLOAD",
-            targetType: "Notice",
-            targetId: notice._id,
-            meta: {
-                title: notice.title,
-            },
-        });
+        // AUDIT LOG
+        // await logAudit({
+        //     admin: req.user?.id || null,
+        //     action: "NOTICE_DOWNLOAD",
+        //     targetType: "Notice",
+        //     targetId: notice._id,
+        //     meta: {
+        //         title: notice.title,
+        //     },
+        // });
 
         // ⬇️ stream from cloudinary
         const response = await axios.get(notice.file.url, {
