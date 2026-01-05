@@ -196,8 +196,7 @@ router.get("/deleted", auth, roleCheck(["admin", "teacher"]), getDeletedNotices)
  * @swagger
  * /api/notices/counts:
  *   get:
- *     tags:
- *       - Notices
+ *     tags: [Notice]
  *     summary: Get notice counts (published & trash)
  *     description: >
  *       Returns notice counts based on logged-in user's role.
