@@ -192,6 +192,40 @@ router.get("/my-notices", auth, roleCheck(["teacher"]), getMyNotices);
  */
 router.get("/deleted", auth, roleCheck(["admin", "teacher"]), getDeletedNotices);
 
+/**
+ * @swagger
+ * /api/notices/counts:
+ *   get:
+ *     tags:
+ *       - Notices
+ *     summary: Get notice counts (published & trash)
+ *     description: >
+ *       Returns notice counts based on logged-in user's role.
+ *       - Admin gets counts of all notices
+ *       - Teacher gets counts of only their own notices
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved notice counts
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 published:
+ *                   type: integer
+ *                   example: 12
+ *                 trash:
+ *                   type: integer
+ *                   example: 3
+ *       401:
+ *         description: Unauthorized (invalid or missing token)
+ *       403:
+ *         description: Forbidden (role not allowed)
+ *       500:
+ *         description: Server error
+ */
 router.get("/counts", auth, roleCheck(["admin", "teacher"]), getNoticeCounts);
 
 /**
