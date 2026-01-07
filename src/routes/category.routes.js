@@ -45,7 +45,7 @@ const {
  *       200:
  *         description: Category created
  */
-router.post("/", auth, roleCheck("admin"), createCategory);
+router.post("/", auth, roleCheck(["admin"]), createCategory);
 
 /**
  * @swagger
@@ -92,7 +92,7 @@ router.get("/", auth, roleCheck(["admin", "teacher"]), getCategories);
  *       200:
  *         description: Category updated
  */
-router.patch("/:id", auth, roleCheck("admin"), updateCategory);
+router.patch("/:id", auth, roleCheck(["admin"]), updateCategory);
 
 /**
  * @swagger
@@ -112,6 +112,6 @@ router.patch("/:id", auth, roleCheck("admin"), updateCategory);
  *       200:
  *         description: Category deleted
  */
-router.delete("/:id", auth, roleCheck("admin"), deleteCategory);
+router.delete("/:id", auth, roleCheck(["admin"]), deleteCategory);
 
 module.exports = router;
